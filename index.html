@@ -6,6 +6,7 @@
 <title>CV Generator – OneBgroup</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --ob-blue: #1a2e4a;
@@ -45,8 +46,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--ob-light); color: v
 .brand-switch label { color: #9bbdd4; font-size: 0.78rem; cursor: pointer; }
 .switch { position: relative; display: inline-block; width: 34px; height: 19px; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.15); border-radius: 19px; transition: .25s; }
-.slider:before { position: absolute; content: ""; height: 13px; width: 13px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .25s; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 19px; transition: .25s; }
+.slider:before { position: absolute; content: ""; height: 13px; width: 13px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 input:checked + .slider { background: var(--ob-gold); }
 input:checked + .slider:before { transform: translateX(15px); background: var(--ob-blue); }
 
@@ -75,7 +76,7 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
   margin: 20px; border: 2px dashed var(--ob-mid); border-radius: 10px;
   padding: 28px 20px; text-align: center; cursor: pointer;
   transition: all 0.2s; background: var(--ob-light);
-  position: relative;
+  position: relative; overflow: hidden;
 }
 .upload-zone:hover, .upload-zone.dragover { border-color: var(--ob-accent); background: #eef4fb; }
 .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
@@ -156,18 +157,50 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
   background: white; width: 100%; max-width: 760px; margin: 0 auto;
   box-shadow: 0 4px 40px rgba(0,0,0,0.18);
   font-family: 'DM Sans', sans-serif;
+  position: relative;
 }
+/* Page break indicators */
+.page-break-line {
+  width: 100%; height: 3px;
+  background: repeating-linear-gradient(90deg, #d0c8c0 0px, #d0c8c0 8px, transparent 8px, transparent 14px);
+  position: relative;
+  margin: 0;
+}
+.page-break-line::after {
+  content: 'Side ' attr(data-page);
+  position: absolute; right: 12px; top: -9px;
+  font-size: 0.6rem; color: #b0a89e; background: white;
+  padding: 0 6px; font-family: 'DM Sans', sans-serif;
+}
+/* Branded footer in preview */
+.cv-preview-footer {
+  padding: 10px 40px 14px;
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: #bbb;
+}
+/* Branded header bar in preview (page 2+) */
+.cv-preview-header {
+  text-align: center; padding: 10px 40px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.page-logo-small { font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; color: #333; margin-bottom: 2px; }
+.page-tagline-small { font-size: 0.55rem; letter-spacing: 2px; color: #999; }
 
 /* CV HEADER */
+.ob-logo-banner { text-align:center; padding: 14px 40px 10px; background: white; border-bottom: 1px solid #f0f0f0; }
+.ob-logo-box { display:block; margin-bottom: 2px; }
+.ob-tagline { display:flex; align-items:center; justify-content:center; gap:8px; }
+.ob-tagline-line { flex:1; max-width:40px; height:0.5px; background:#aaa; display:block; }
+.ob-tagline-text { font-size: 0.55rem; letter-spacing: 2px; color: #999; font-weight: 400; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
 .cv-header {
-  padding: 36px 40px 28px;
+  padding: 32px 40px 28px;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr auto;
   gap: 24px;
   align-items: start;
-  border-bottom: 3px solid var(--ob-mid);
+  border-bottom: 1px solid var(--ob-mid);
 }
-.cv-header.branded { border-bottom-color: var(--ob-gold); background: linear-gradient(135deg, #f9f7f4 0%, #fff 60%); }
+.cv-header.branded { border-bottom-color: var(--ob-mid); }
 
 .cv-photo-wrap { position: relative; }
 .cv-photo {
@@ -182,38 +215,46 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
 
 .cv-header-info { display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: 120px; }
 .cv-name { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--ob-blue); line-height: 1.1; margin-bottom: 4px; }
-.cv-title { font-size: 0.9rem; color: var(--ob-accent); font-weight: 500; margin-bottom: 12px; }
-.cv-contact-line { font-size: 0.78rem; color: var(--ob-muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.cv-title { font-size: 0.9rem; color: var(--ob-accent); font-weight: 500; margin-bottom: 14px; }
+.cv-consultant {
+  margin-top: 16px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: var(--ob-muted);
+  line-height: 1.6;
+}
+.cv-consultant strong {
+  color: var(--ob-text);
+  font-weight: 600;
+}
+.cv-contact-line { font-size: 0.78rem; color: var(--ob-muted); display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 2px; }
 .cv-contact-line span::before { content: ''; }
 
-.ob-badge {
-  display: none; margin-top: 10px; padding: 6px 12px;
-  background: var(--ob-blue); color: var(--ob-gold);
-  border-radius: 4px; font-size: 0.72rem; font-weight: 600;
-  letter-spacing: 0.5px; width: fit-content;
-}
-.branded .ob-badge { display: block; }
+
 
 /* CV BODY */
-.cv-body { padding: 28px 40px; }
-.cv-section { margin-bottom: 26px; }
+.cv-body { padding: 20px 40px; }
+.cv-section { margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
 .cv-section-title {
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 2px; color: var(--ob-accent); margin-bottom: 12px;
   padding-bottom: 5px; border-bottom: 1.5px solid var(--ob-mid);
+  page-break-after: avoid; break-after: avoid;
 }
 .cv-section-title.branded { border-bottom-color: var(--ob-gold); color: var(--ob-blue); }
 
-.cv-profile { font-size: 0.88rem; line-height: 1.7; color: #333; }
+.cv-profile { font-size: 0.88rem; line-height: 1.7; color: #333; page-break-inside: avoid; break-inside: avoid; }
 
-.cv-exp-item { margin-bottom: 18px; }
+.cv-exp-item { margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid; }
 .cv-exp-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
 .cv-exp-role { font-weight: 600; font-size: 0.9rem; color: var(--ob-text); }
 .cv-exp-period { font-size: 0.78rem; color: var(--ob-muted); }
 .cv-exp-company { font-size: 0.82rem; color: var(--ob-accent); margin-bottom: 6px; }
 .cv-exp-desc { font-size: 0.82rem; line-height: 1.65; color: #444; white-space: pre-wrap; }
+.cv-tech-stack { font-size: 0.75rem; color: var(--ob-muted); margin-top: 12px; }
+.cv-tech-label { font-weight: 600; color: var(--ob-accent); }
 
-.cv-skills-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.cv-skills-grid { display: flex; flex-wrap: wrap; gap: 6px; page-break-inside: avoid; break-inside: avoid; }
 .cv-skill-chip { background: var(--ob-light); border: 1px solid var(--ob-mid); color: var(--ob-text); font-size: 0.76rem; padding: 3px 10px; border-radius: 4px; }
 .branded .cv-skill-chip { background: var(--ob-blue); color: white; border-color: var(--ob-blue); }
 
@@ -227,13 +268,30 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
 .cv-lang-item:last-child { border-bottom: none; }
 .cv-lang-level { color: var(--ob-muted); font-size: 0.8rem; }
 
-.cv-footer {
-  padding: 14px 40px; border-top: 1px solid var(--ob-mid);
-  display: none; align-items: center; justify-content: space-between;
+
+
+
+
+
+
+.top-skill-chip {
+  padding: 4px 10px; border-radius: 5px; font-size: 0.75rem; cursor: pointer;
+  border: 1px solid var(--ob-mid); background: white; color: var(--ob-muted);
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif;
 }
-.branded .cv-footer-wrap { display: flex !important; }
-.cv-footer-text { font-size: 0.7rem; color: var(--ob-muted); }
-.cv-footer-logo { font-family: 'DM Serif Display', serif; font-size: 0.9rem; color: var(--ob-gold); }
+.top-skill-chip.selected {
+  background: var(--ob-gold); border-color: var(--ob-gold);
+  color: var(--ob-blue); font-weight: 600;
+}
+.cv-top-skills { margin-bottom: 14px; }
+.cv-top-skill-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--ob-blue); color: var(--ob-gold);
+  padding: 4px 12px; border-radius: 5px; font-size: 0.78rem; font-weight: 600;
+}
+.branded .cv-top-skill-chip {
+  background: var(--ob-gold); color: var(--ob-blue);
+}
 
 /* Empty state */
 .empty-hint { color: #bbb; font-style: italic; font-size: 0.82rem; }
@@ -245,7 +303,7 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
   .preview-panel { padding: 16px; }
 }
 
-.cv-footer-wrap { display: none; }
+
 </style>
 </head>
 <body>
@@ -283,10 +341,10 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
   <div class="form-panel" id="formPanel">
 
     <!-- Upload -->
-    <div class="section-header" data-t-key="uploadSection">📎 UPLOAD EXISTING CV</div>
+    <div class="section-header" data-t-key="uploadSection">📎 UPLOAD EKSISTERENDE CV</div>
     <div style="padding: 16px 20px 0;">
       <div class="upload-zone" id="uploadZone">
-        <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="handleFile(this.files[0])">
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="handleFile(this.files[0])" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:10;">
         <div class="upload-icon">📄</div>
         <div class="upload-title" data-t="uploadTitle">Drop your CV here or click to browse</div>
         <div class="upload-sub" data-t="uploadSub">LinkedIn PDF export, Word document, or any PDF CV</div>
@@ -297,6 +355,18 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
         </div>
       </div>
     </div>
+    <!-- AI rewrite toggle -->
+    <div style="margin: 0 20px 16px; background: #f9f7f4; border: 1px solid var(--ob-mid); border-radius: 8px; padding: 10px 14px; display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <div style="font-size:0.78rem; font-weight:600; color:var(--ob-text);" data-t="rewriteLabel">AI omskriver teksten</div>
+        <div style="font-size:0.7rem; color:var(--ob-muted); margin-top:2px;" data-t="rewriteHint">Slå fra for at bevare original tekst</div>
+      </div>
+      <label class="switch" style="flex-shrink:0; margin-left:12px;">
+        <input type="checkbox" id="rewriteToggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <div class="ai-status" id="aiStatus">
       <div class="spinner" id="aiSpinner"></div>
       <span id="aiStatusText">Reading your CV with AI…</span>
@@ -319,6 +389,10 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
         <label data-t="jobTitle">Job Title / Role</label>
         <input type="text" id="jobTitle" oninput="updatePreview()" placeholder="Senior Software Developer">
       </div>
+      <div class="field">
+        <label data-t="consultant">Konsulentansvarlig</label>
+        <input type="text" id="consultant" oninput="updatePreview()" placeholder="Jacques de Bourbon-Parme">
+      </div>
       <div class="field-row">
         <div class="field">
           <label data-t="email">Email</label>
@@ -340,8 +414,14 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
         </div>
       </div>
       <div class="field">
-        <label data-t="photoUrl">Photo URL (optional)</label>
-        <input type="text" id="photoUrl" oninput="updatePreview()" placeholder="https://...">
+        <label data-t="photoLabel">Foto (valgfrit)</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <label for="photoFileInput" id="photoUploadBtn" style="display:inline-flex; align-items:center; gap:6px; background:var(--ob-light); border:1px solid var(--ob-mid); border-radius:7px; padding:8px 14px; cursor:pointer; font-size:0.8rem; color:var(--ob-accent); font-weight:500; transition:all 0.15s;">
+            📷 <span data-t="photoBtn">Vælg billede</span>
+          </label>
+          <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+          <span id="photoFileName" style="font-size:0.75rem; color:var(--ob-muted);" data-t="photoNone">Intet billede valgt</span>
+        </div>
       </div>
     </div>
 
@@ -356,26 +436,46 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
 
     <!-- Experience -->
     <div class="section-header" style="justify-content:space-between;" data-t-key="sectionExp">💼 EXPERIENCE</div>
+
+    <!-- Year Filter - moved to top -->
+    <div style="padding: 10px 20px 12px; background: #f9f7f4; border-bottom: 1px solid var(--ob-mid);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:0.75rem; font-weight:600; color:var(--ob-accent);" data-t="filterLabel">Vis erfaring fra de seneste</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="number" id="yearFilter" value="10" min="1" max="50"
+            style="width:52px; border:1px solid var(--ob-mid); border-radius:6px; padding:4px 8px; font-size:0.85rem; font-family:'DM Sans',sans-serif; text-align:center;"
+            oninput="applyYearFilter()">
+          <span style="font-size:0.75rem; color:var(--ob-muted);" data-t="filterYears">år</span>
+        </div>
+      </div>
+      <input type="range" id="yearSlider" min="1" max="50" value="10"
+        style="width:100%; accent-color:var(--ob-accent);"
+        oninput="document.getElementById('yearFilter').value=this.value; applyYearFilter()">
+      <div style="font-size:0.71rem; color:var(--ob-muted); margin-top:4px;" data-t="filterHint">
+        Stillinger udenfor perioden markeres – du kan vælge at inkludere dem enkeltvis
+      </div>
+    </div>
+
     <div class="section-body">
       <div id="expList"></div>
       <button class="add-btn" onclick="addExp()">+ <span data-t="addExp">Add position</span></button>
     </div>
 
-    <!-- Further Experience -->
-    <div class="section-header" data-t-key="sectionFurther">📋 FURTHER EXPERIENCE</div>
-    <div class="section-body">
-      <div id="furtherList"></div>
-      <button class="add-btn" onclick="addFurther()">+ <span data-t="addFurther">Add entry</span></button>
-    </div>
+
 
     <!-- Skills -->
     <div class="section-header" data-t-key="sectionSkills">⚙️ SKILLS</div>
     <div class="section-body">
       <div class="field">
-        <label data-t="skillsHint">Type a skill and press Enter</label>
+        <label data-t="skillsHint">Skriv en kompetence og tryk Enter</label>
         <div class="skills-input-area" id="skillsArea" onclick="document.getElementById('skillInput').focus()">
           <input type="text" id="skillInput" class="skills-type-input" placeholder="e.g. Python" onkeydown="skillKeyDown(event)">
         </div>
+      </div>
+      <div style="margin-top:10px; padding:10px; background:var(--ob-light); border-radius:8px; border:1px solid var(--ob-mid);">
+        <div style="font-size:0.72rem; font-weight:600; color:var(--ob-accent); margin-bottom:6px;" data-t="topSkillsLabel">⭐ TOP SKILLS — klik for at fremhæve (vises øverst i CV)</div>
+        <div id="topSkillsPicker" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <div style="font-size:0.7rem; color:var(--ob-muted); margin-top:6px;" data-t="topSkillsHint">Ingen valgt = vises ikke i CV</div>
       </div>
     </div>
 
@@ -384,6 +484,13 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
     <div class="section-body">
       <div id="eduList"></div>
       <button class="add-btn" onclick="addEdu()">+ <span data-t="addEdu">Add education</span></button>
+    </div>
+
+    <!-- Certifications -->
+    <div class="section-header" data-t-key="sectionCert">🏆 CERTIFICATIONS & COURSES</div>
+    <div class="section-body">
+      <div id="certList"></div>
+      <button class="add-btn" onclick="addCert()">+ <span data-t="addCert">Add certification</span></button>
     </div>
 
     <!-- Languages -->
@@ -401,18 +508,28 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
     <div class="cv-doc" id="cvDoc">
 
       <!-- CV HEADER -->
+      <!-- OneBgroup logo banner (only shown when branded) -->
+      <div class="ob-logo-banner" id="obLogoBanner" style="display:none;">
+        <div class="ob-logo-box">
+          <div class="ob-logo-wordmark" style="font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:4px; color:#333; text-transform:uppercase; margin-bottom:3px;">ONE B GROUP</div>
+        </div>
+        <div class="ob-tagline">
+          <span class="ob-tagline-line"></span>
+          <span class="ob-tagline-text">PEOPLE, CULTURE, TECH</span>
+          <span class="ob-tagline-line"></span>
+        </div>
+      </div>
+
       <div class="cv-header" id="cvHeader">
+        <div class="cv-header-info">
+          <div class="cv-name" id="cvName">Your Name</div>
+          <div class="cv-title" id="cvTitleDisp"></div>
+          <div class="cv-consultant" id="cvConsultant" style="display:none;"></div>
+          <div class="cv-contact-line" id="cvContactLine"></div>
+        </div>
         <div class="cv-photo-wrap">
           <div class="cv-photo-placeholder" id="cvPhotoPlaceholder">👤</div>
           <img class="cv-photo" id="cvPhoto" src="" alt="" style="display:none">
-        </div>
-        <div class="cv-header-info">
-          <div>
-            <div class="cv-name" id="cvName">Your Name</div>
-            <div class="cv-title" id="cvTitleDisp"></div>
-            <div class="cv-contact-line" id="cvContactLine"></div>
-          </div>
-          <div class="ob-badge">Presented by OneBgroup · onebgroup.dk</div>
         </div>
       </div>
 
@@ -423,18 +540,13 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
         <div class="cv-section" id="secProfile">
           <div class="cv-section-title" id="ttlProfile">PROFILE</div>
           <div class="cv-profile" id="cvProfile"><span class="empty-hint">Your profile will appear here…</span></div>
+          <div id="cvTopSkillsInline" style="display:none; margin-top:14px;"></div>
         </div>
 
         <!-- Experience -->
         <div class="cv-section" id="secExp">
           <div class="cv-section-title" id="ttlExp">EXPERIENCE</div>
           <div id="cvExpItems"></div>
-        </div>
-
-        <!-- Further Exp -->
-        <div class="cv-section" id="secFurther">
-          <div class="cv-section-title" id="ttlFurther">FURTHER EXPERIENCE</div>
-          <div id="cvFurtherItems"></div>
         </div>
 
         <!-- Skills -->
@@ -449,6 +561,12 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
           <div id="cvEduItems"></div>
         </div>
 
+        <!-- Certifications -->
+        <div class="cv-section" id="secCert" style="display:none;">
+          <div class="cv-section-title" id="ttlCert">CERTIFICATIONS</div>
+          <div id="cvCertItems"></div>
+        </div>
+
         <!-- Languages -->
         <div class="cv-section" id="secLang">
           <div class="cv-section-title" id="ttlLang">LANGUAGES</div>
@@ -457,80 +575,85 @@ input:checked + .slider:before { transform: translateX(15px); background: var(--
 
       </div>
 
-      <!-- CV FOOTER (branding) -->
-      <div class="cv-footer-wrap" id="cvFooterWrap">
-        <div class="cv-footer" id="cvFooter" style="display:flex;">
-          <div class="cv-footer-text">onebgroup.dk · Recruitment & IT Consulting</div>
-          <div class="cv-footer-logo">OneB<span style="color:#2d5a8a">group</span></div>
-        </div>
-      </div>
+
 
     </div>
   </div>
 </div>
 
 <script>
+// Logo removed - using CSS text instead
 // ── TRANSLATIONS ──────────────────────────────────────────────────────────────
 const T = {
   en: {
     uploadSection: '📎 UPLOAD EXISTING CV',
+    rewriteLabel: 'AI rewrites the text', rewriteHint: 'Turn off to keep original text',
     uploadTitle: 'Drop your CV here or click to browse',
     uploadSub: 'LinkedIn PDF export, Word document, or any PDF CV',
     sectionPersonal: '👤 PERSONAL INFORMATION',
     firstName: 'First Name', lastName: 'Last Name',
-    jobTitle: 'Job Title / Role', email: 'Email', phone: 'Phone',
-    location: 'Location', linkedin: 'LinkedIn', photoUrl: 'Photo URL (optional)',
+    jobTitle: 'Job Title / Role', consultant: 'Consultant manager', email: 'Email', phone: 'Phone',
+    location: 'Location', linkedin: 'LinkedIn', photoLabel: 'Photo (optional)', photoBtn: 'Choose photo', photoNone: 'No photo selected',
     sectionProfile: '📝 PROFILE', profileText: 'Profile Summary',
     sectionExp: '💼 EXPERIENCE', addExp: 'Add position',
     sectionFurther: '📋 FURTHER EXPERIENCE', addFurther: 'Add entry',
     sectionSkills: '⚙️ SKILLS', skillsHint: 'Type a skill and press Enter',
     sectionEdu: '🎓 EDUCATION', addEdu: 'Add education',
+    sectionCert: '🏆 CERTIFICATIONS & COURSES', addCert: 'Add certification', certName: 'Certification / Course', certIssuer: 'Issuer', certYear: 'Year', cvCert: 'CERTIFICATIONS',
     sectionLang: '🌐 LANGUAGES', addLang: 'Add language',
     brandLabel: 'OneBgroup branding',
     downloadPDF: 'Download PDF',
-    role: 'Role / Title', company: 'Company', period: 'Period (e.g. 2021 – Present)',
+    role: 'Role / Title', company: 'Company', period: 'Period (e.g. 2021 – Present)', techStack: 'Tech Stack',
     description: 'Description', degree: 'Degree / Programme',
     school: 'School / University', language: 'Language', level: 'Level',
     cvProfile: 'PROFILE', cvExp: 'EXPERIENCE', cvFurther: 'FURTHER EXPERIENCE',
     cvSkills: 'SKILLS', cvEdu: 'EDUCATION', cvLang: 'LANGUAGES',
     aiLoading: 'Reading your CV with AI…',
     aiDone: '✓ CV imported successfully – please review and edit the fields',
+    filterLabel: 'Show experience from the last', filterYears: 'years', filterHint: 'Positions outside the period are dimmed – you can include them individually',
     aiError: 'Could not read file. Please fill in the fields manually.',
     expTitle: 'Title / Project',
+    apiKeyLabel: 'Anthropic API Key (required to read CV)',
+    apiKeyHint: 'Your key never leaves your browser – it is used directly client-side. Get a key at',
   },
   da: {
     uploadSection: '📎 UPLOAD EKSISTERENDE CV',
+    rewriteLabel: 'AI omskriver teksten', rewriteHint: 'Slå fra for at bevare original tekst',
     uploadTitle: 'Slip dit CV her eller klik for at vælge',
     uploadSub: 'LinkedIn PDF-eksport, Word-dokument eller anden PDF',
     sectionPersonal: '👤 PERSONLIGE OPLYSNINGER',
     firstName: 'Fornavn', lastName: 'Efternavn',
-    jobTitle: 'Jobtitel / Rolle', email: 'E-mail', phone: 'Telefon',
-    location: 'By / Land', linkedin: 'LinkedIn', photoUrl: 'Foto URL (valgfrit)',
+    jobTitle: 'Jobtitel / Rolle', consultant: 'Konsulentansvarlig', email: 'E-mail', phone: 'Telefon',
+    location: 'By / Land', linkedin: 'LinkedIn', photoLabel: 'Foto (valgfrit)', photoBtn: 'Vælg billede', photoNone: 'Intet billede valgt',
     sectionProfile: '📝 PROFIL', profileText: 'Profilbeskrivelse',
     sectionExp: '💼 ERFARING', addExp: 'Tilføj stilling',
     sectionFurther: '📋 YDERLIGERE ERFARING', addFurther: 'Tilføj post',
     sectionSkills: '⚙️ KOMPETENCER', skillsHint: 'Skriv en kompetence og tryk Enter',
     sectionEdu: '🎓 UDDANNELSE', addEdu: 'Tilføj uddannelse',
+    sectionCert: '🏆 CERTIFICERINGER & KURSER', addCert: 'Tilføj certificering', certName: 'Certificering / Kursus', certIssuer: 'Udsteder', certYear: 'År', cvCert: 'CERTIFICERINGER',
     sectionLang: '🌐 SPROG', addLang: 'Tilføj sprog',
     brandLabel: 'OneBgroup branding',
     downloadPDF: 'Download PDF',
-    role: 'Rolle / Titel', company: 'Virksomhed', period: 'Periode (f.eks. 2021 – nu)',
+    role: 'Rolle / Titel', company: 'Virksomhed', period: 'Periode (f.eks. 2021 – nu)', techStack: 'Tech Stack',
     description: 'Beskrivelse', degree: 'Grad / Uddannelse',
     school: 'Skole / Universitet', language: 'Sprog', level: 'Niveau',
     cvProfile: 'PROFIL', cvExp: 'ERFARING', cvFurther: 'YDERLIGERE ERFARING',
     cvSkills: 'KOMPETENCER', cvEdu: 'UDDANNELSE', cvLang: 'SPROG',
     aiLoading: 'Læser dit CV med AI…',
     aiDone: '✓ CV importeret – gennemgå og rediger felterne',
-    aiError: 'Kunne ikke læse filen. Udfyld venligst felterne manuelt.',
+    filterLabel: 'Vis erfaring fra de seneste', filterYears: 'år', filterHint: 'Stillinger udenfor perioden markeres – du kan vælge at inkludere dem enkeltvis',
+    aiError: 'Kunne ikke læse filen. Tjek din API-nøgle eller udfyld felterne manuelt.',
     expTitle: 'Titel / Projekt',
+    apiKeyLabel: 'Anthropic API-nøgle (kræves for at læse CV)',
+    apiKeyHint: 'Din nøgle forlader aldrig din browser – den bruges direkte. Få en nøgle på',
   }
 };
 let lang = 'en';
 let skills = [];
 let expItems = [];
-let furtherItems = [];
 let eduItems = [];
 let langItems = [];
+let certItems = [];
 
 function t(key) { return T[lang][key] || key; }
 
@@ -559,7 +682,7 @@ function skillKeyDown(e) {
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
     const val = e.target.value.trim().replace(/,$/, '');
-    if (val) { skills.push(val); e.target.value = ''; renderSkillTags(); updatePreview(); }
+    if (val) { skills.push({ name: val, top: false }); e.target.value = ''; renderSkillTags(); renderTopSkillsPicker(); updatePreview(); }
   }
 }
 function renderSkillTags() {
@@ -567,26 +690,95 @@ function renderSkillTags() {
   area.querySelectorAll('.skill-tag').forEach(e => e.remove());
   const input = document.getElementById('skillInput');
   skills.forEach((s, i) => {
+    const name = typeof s === 'string' ? s : s.name;
     const tag = document.createElement('div');
     tag.className = 'skill-tag';
-    tag.innerHTML = `${s}<button onclick="removeSkill(${i})">×</button>`;
+    tag.innerHTML = `${name}<button onclick="removeSkill(${i})">×</button>`;
     area.insertBefore(tag, input);
   });
 }
-function removeSkill(i) { skills.splice(i, 1); renderSkillTags(); updatePreview(); }
+function removeSkill(i) {
+  skills.splice(i, 1);
+  renderSkillTags();
+  renderTopSkillsPicker();
+  updatePreview();
+}
+function renderTopSkillsPicker() {
+  const picker = document.getElementById('topSkillsPicker');
+  if (!picker) return;
+  picker.innerHTML = '';
+  skills.forEach((s, i) => {
+    const name = typeof s === 'string' ? s : s.name;
+    const isTop = typeof s === 'object' && s.top;
+    const chip = document.createElement('button');
+    chip.className = 'top-skill-chip' + (isTop ? ' selected' : '');
+    chip.textContent = (isTop ? '⭐ ' : '') + name;
+    chip.onclick = () => {
+      if (typeof skills[i] === 'string') skills[i] = { name: skills[i], top: false };
+      skills[i].top = !skills[i].top;
+      renderTopSkillsPicker();
+      updatePreview();
+    };
+    picker.appendChild(chip);
+  });
+}
 
 // ── DYNAMIC LISTS ────────────────────────────────────────────────────────────
 function addExp(data={}) {
   expItems.push({ role: data.role||'', company: data.company||'', period: data.period||'', description: data.description||'' });
   renderExpList(); updatePreview();
 }
+function getYearFilter() {
+  const v = parseInt(document.getElementById('yearFilter')?.value || '50');
+  return isNaN(v) ? 50 : v;
+}
+
+function parseEndYear(period) {
+  if (!period) return null;
+  const lower = period.toLowerCase();
+  if (lower.includes('present') || lower.includes('nu') || lower.includes('current') || lower.includes('i dag')) {
+    return new Date().getFullYear();
+  }
+  const years = period.match(/\d{4}/g);
+  if (!years) return null;
+  return parseInt(years[years.length - 1]);
+}
+
+function isWithinFilter(item) {
+  if (item.forceInclude) return true;
+  const endYear = parseEndYear(item.period);
+  if (!endYear) return true; // can't determine, show it
+  const cutoff = new Date().getFullYear() - getYearFilter();
+  return endYear >= cutoff;
+}
+
+function applyYearFilter() {
+  // sync slider <-> number input
+  const num = document.getElementById('yearFilter');
+  const slider = document.getElementById('yearSlider');
+  if (slider && num) slider.value = num.value;
+  renderExpList();
+  updatePreview();
+}
+
 function renderExpList() {
   const el = document.getElementById('expList');
   el.innerHTML = '';
   expItems.forEach((item, i) => {
+    const within = isWithinFilter(item);
+    const dimmed = !within ? 'opacity:0.45;' : '';
+    const btnLabel = within ? '✓ Inkluderet' : '+ Inkludér alligevel';
+    const btnStyle = within
+      ? 'background:#edfaf3;color:#2a6e4e;border:1px solid #b2e0c8;'
+      : 'background:#fff8ee;color:#996600;border:1px solid #f5d88a;';
     el.innerHTML += `
-    <div class="list-item">
+    <div class="list-item" style="${dimmed}">
       <button class="remove-btn" onclick="removeExp(${i})">×</button>
+      ${!within ? `<div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.71rem;color:#996600;">⏱ Udenfor valgt periode</span>
+        <button onclick="expItems[${i}].forceInclude=!expItems[${i}].forceInclude;renderExpList();updatePreview();"
+          style="${btnStyle}font-size:0.71rem;border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;">${btnLabel}</button>
+      </div>` : ''}
       <div class="field"><label>${t('role')}</label>
         <input value="${esc(item.role)}" oninput="expItems[${i}].role=this.value;updatePreview()"></div>
       <div class="field"><label>${t('company')}</label>
@@ -595,34 +787,15 @@ function renderExpList() {
         <input value="${esc(item.period)}" oninput="expItems[${i}].period=this.value;updatePreview()"></div>
       <div class="field"><label>${t('description')}</label>
         <textarea rows="4" oninput="expItems[${i}].description=this.value;updatePreview()">${esc(item.description)}</textarea></div>
+      <div class="field"><label data-t="techStack">Tech Stack</label>
+        <input value="${esc(item.techStack||'')}" placeholder="TypeScript, React, Docker..." oninput="expItems[${i}].techStack=this.value;updatePreview()"></div>
     </div>`;
   });
 }
 function removeExp(i) { expItems.splice(i,1); renderExpList(); updatePreview(); }
 
-function addFurther(data={}) {
-  furtherItems.push({ title: data.title||'', company: data.company||'', period: data.period||'' });
-  renderFurtherList(); updatePreview();
-}
-function renderFurtherList() {
-  const el = document.getElementById('furtherList');
-  el.innerHTML = '';
-  furtherItems.forEach((item, i) => {
-    el.innerHTML += `
-    <div class="list-item">
-      <button class="remove-btn" onclick="removeFurther(${i})">×</button>
-      <div class="field"><label>${t('expTitle')}</label>
-        <input value="${esc(item.title)}" oninput="furtherItems[${i}].title=this.value;updatePreview()"></div>
-      <div class="field-row">
-        <div class="field"><label>${t('company')}</label>
-          <input value="${esc(item.company)}" oninput="furtherItems[${i}].company=this.value;updatePreview()"></div>
-        <div class="field"><label>${t('period')}</label>
-          <input value="${esc(item.period)}" oninput="furtherItems[${i}].period=this.value;updatePreview()"></div>
-      </div>
-    </div>`;
-  });
-}
-function removeFurther(i) { furtherItems.splice(i,1); renderFurtherList(); updatePreview(); }
+
+
 
 function addEdu(data={}) {
   eduItems.push({ degree: data.degree||'', school: data.school||'', period: data.period||'', description: data.description||'' });
@@ -670,19 +843,32 @@ function renderLangList() {
 }
 function removeLang(i) { langItems.splice(i,1); renderLangList(); updatePreview(); }
 
-function rebuildAllLists() { renderExpList(); renderFurtherList(); renderEduList(); renderLangList(); }
+function rebuildAllLists() { renderExpList(); renderEduList(); renderLangList(); }
 
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── PHOTO UPLOAD ─────────────────────────────────────────────────────────────
+function handlePhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._photoDataUrl = e.target.result;
+    document.getElementById('photoFileName').textContent = file.name;
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+}
 
 // ── PREVIEW ──────────────────────────────────────────────────────────────────
 function updatePreview() {
   const branded = document.getElementById('brandToggle').checked;
   const header = document.getElementById('cvHeader');
-  const footer = document.getElementById('cvFooterWrap');
 
   // Branding
+  const banner = document.getElementById('obLogoBanner');
+  if (banner) banner.style.display = branded ? 'block' : 'none';
   header.classList.toggle('branded', branded);
-  footer.style.display = branded ? 'block' : 'none';
   document.querySelectorAll('.cv-section-title').forEach(el => el.classList.toggle('branded', branded));
   document.querySelectorAll('.cv-skill-chip').forEach(el => el.classList.toggle('branded', branded));
 
@@ -693,6 +879,17 @@ function updatePreview() {
 
   // Title
   document.getElementById('cvTitleDisp').textContent = document.getElementById('jobTitle').value;
+
+  // Consultant
+  const consultant = document.getElementById('consultant').value;
+  const cvConsultant = document.getElementById('cvConsultant');
+  if (consultant) {
+    cvConsultant.style.display = 'block';
+    const consultantLabel = lang === 'da' ? 'Konsulentansvarlig hos One B Group' : 'Contact at One B Group';
+    cvConsultant.innerHTML = '<strong>' + consultantLabel + ':</strong> ' + consultant;
+  } else {
+    cvConsultant.style.display = 'none';
+  }
 
   // Contact
   const parts = [];
@@ -707,10 +904,9 @@ function updatePreview() {
   document.getElementById('cvContactLine').innerHTML = parts.map(p => `<span>${p}</span>`).join('');
 
   // Photo
-  const photoUrl = document.getElementById('photoUrl').value;
   const img = document.getElementById('cvPhoto');
   const placeholder = document.getElementById('cvPhotoPlaceholder');
-  if (photoUrl) { img.src = photoUrl; img.style.display = 'block'; placeholder.style.display = 'none'; }
+  if (window._photoDataUrl) { img.src = window._photoDataUrl; img.style.display = 'block'; placeholder.style.display = 'none'; }
   else { img.style.display = 'none'; placeholder.style.display = 'flex'; }
 
   // Profile
@@ -721,49 +917,81 @@ function updatePreview() {
   // Section titles
   document.getElementById('ttlProfile').textContent = t('cvProfile');
   document.getElementById('ttlExp').textContent = t('cvExp');
-  document.getElementById('ttlFurther').textContent = t('cvFurther');
   document.getElementById('ttlSkills').textContent = t('cvSkills');
   document.getElementById('ttlEdu').textContent = t('cvEdu');
   document.getElementById('ttlLang').textContent = t('cvLang');
 
-  // Experience
+  // Experience (filtered)
   const expEl = document.getElementById('cvExpItems');
-  expEl.innerHTML = expItems.length ? expItems.map(e => `
-    <div class="cv-exp-item">
+  const visibleExp = expItems.filter(e => isWithinFilter(e));
+  expEl.innerHTML = visibleExp.length ? visibleExp.map(e => `
+    <div class="cv-exp-item" style="page-break-inside:avoid;">
       <div class="cv-exp-header">
         <span class="cv-exp-role">${esc(e.role)}</span>
         <span class="cv-exp-period">${esc(e.period)}</span>
       </div>
       <div class="cv-exp-company">${esc(e.company)}</div>
       <div class="cv-exp-desc">${esc(e.description)}</div>
+      ${e.techStack ? `<div class="cv-tech-stack"><span class="cv-tech-label">Tech:</span> ${esc(e.techStack)}</div>` : ''}
     </div>`).join('') : '<span class="empty-hint">Add your experience…</span>';
 
-  // Further
-  const furtherEl = document.getElementById('cvFurtherItems');
-  furtherEl.innerHTML = furtherItems.length ? furtherItems.map(e => `
-    <div class="cv-exp-item" style="margin-bottom:8px;">
-      <div class="cv-exp-header">
-        <span class="cv-exp-role">${esc(e.title)}</span>
-        <span class="cv-exp-period">${esc(e.period)}</span>
-      </div>
-      <div class="cv-exp-company">${esc(e.company)}</div>
-    </div>`).join('') : '<span class="empty-hint">Add further experience…</span>';
+
 
   // Skills
+  const topSkills = skills.filter(s => typeof s === 'object' && s.top);
+  const regularSkills = skills.filter(s => !(typeof s === 'object' && s.top));
+
+  // Top skills inline under profile
+  const topInline = document.getElementById('cvTopSkillsInline');
+  if (topSkills.length > 0) {
+    topInline.style.display = 'block';
+    topInline.innerHTML = `
+      <div style="font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:var(--ob-muted); margin-bottom:7px;">TOP SKILLS</div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        ${topSkills.map(s => `<span class="cv-top-skill-chip${branded?' branded':''}">${esc(s.name)}</span>`).join('')}
+      </div>`;
+  } else {
+    topInline.style.display = 'none';
+    topInline.innerHTML = '';
+  }
+
+  // All skills in skills section
   const skillsEl = document.getElementById('cvSkillsGrid');
   skillsEl.innerHTML = skills.length
-    ? skills.map(s => `<span class="cv-skill-chip${branded?' branded':''}">${esc(s)}</span>`).join('')
+    ? skills.map(s => {
+        const name = typeof s === 'string' ? s : s.name;
+        const isTop = typeof s === 'object' && s.top;
+        return `<span class="cv-skill-chip${branded?' branded':''}" style="${isTop?'font-weight:600;':''}">${esc(name)}</span>`;
+      }).join('')
     : '<span class="empty-hint">Add your skills…</span>';
 
   // Education
   const eduEl = document.getElementById('cvEduItems');
   eduEl.innerHTML = eduItems.length ? eduItems.map(e => `
-    <div class="cv-edu-item">
+    <div class="cv-edu-item" style="page-break-inside:avoid; break-inside:avoid;">
       <div class="cv-edu-degree">${esc(e.degree)}</div>
       <div class="cv-edu-school">${esc(e.school)}</div>
       <div class="cv-edu-period">${esc(e.period)}</div>
       ${e.description ? `<div class="cv-edu-desc">${esc(e.description)}</div>` : ''}
     </div>`).join('') : '<span class="empty-hint">Add your education…</span>';
+
+  // Certifications
+  const certSection = document.getElementById('secCert');
+  const certEl = document.getElementById('cvCertItems');
+  document.getElementById('ttlCert').textContent = t('cvCert');
+  if (certItems.length) {
+    certSection.style.display = 'block';
+    certEl.innerHTML = certItems.map(c => `
+      <div class="cv-edu-item" style="page-break-inside:avoid; break-inside:avoid;">
+        <div class="cv-edu-degree">${esc(c.name)}</div>
+        <div style="display:flex; justify-content:space-between;">
+          <div class="cv-edu-school">${esc(c.issuer)}</div>
+          <div class="cv-edu-period">${esc(c.year)}</div>
+        </div>
+      </div>`).join('');
+  } else {
+    certSection.style.display = 'none';
+  }
 
   // Languages
   const langEl = document.getElementById('cvLangItems');
@@ -772,6 +1000,9 @@ function updatePreview() {
       <span>${esc(l.language)}</span>
       <span class="cv-lang-level">${esc(l.level)}</span>
     </div>`).join('') : '<span class="empty-hint">Add languages…</span>';
+
+  // Update page break indicators
+  setTimeout(updatePageBreaks, 50);
 }
 
 // ── FILE UPLOAD + AI EXTRACTION ──────────────────────────────────────────────
@@ -782,12 +1013,12 @@ uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classL
 
 async function handleFile(file) {
   if (!file) return;
+
   showAiStatus('loading', t('aiLoading'));
 
   try {
     const base64 = await fileToBase64(file);
     const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-    const isDocx = file.name.endsWith('.docx') || file.name.endsWith('.doc');
 
     let messages;
     if (isPDF) {
@@ -799,23 +1030,38 @@ async function handleFile(file) {
         ]
       }];
     } else {
-      // For docx/other: send as text description
       messages = [{
         role: 'user',
         content: `The user uploaded a CV file named "${file.name}" but it cannot be read directly as it is a binary Word document. Please return an empty JSON structure so the user can fill it in manually. ${EXTRACTION_PROMPT_EMPTY}`
       }];
     }
 
+    const rewrite = document.getElementById('rewriteToggle').checked;
+    const systemPrompt = lang === 'da'
+      ? (rewrite
+        ? 'Du er en erfaren teknisk skribent og CV-specialist for et IT-rekrutteringsfirma. VIGTIGT: Du m\u00e5 gerne forbedre sproget og g\u00f8re teksten mere fl\u00f8dende og professionel, men du m\u00e5 ALDRIG ændre niveauet p\u00e5 en kandidats kvalifikationer. Brug pr\u00e6cis de samme ord til at beskrive niveau og erfaring som i originalen. Udtræk struktureret information fra CV\'et og omskriv ALT tekst p\u00e5 DANSK. F\u00f8lg disse regler: (1) Profil/sammenfatning: max 8 sætninger fordelt på 2-3 korte afsnit adskilt af blanke linjer. Brug hele CV-et som kilde - profiltekst, erfaring, skills og uddannelse - til at lave en nuanceret profiltekst der afspejler kandidatens samlede profil. Fokuser på primære styrker, unikke værdi og arbejdsstil. Hvis CV-et nævner personlige interesser eller hobbyer uden for arbejdet, inkluder en kort omtale sidst i profilteksten - maksimalt én sætning - da det giver et mere menneskeligt indtryk af kandidaten. (2) Hver jobbeskrivelse: start med 2-3 linjer (uden overskrift) der beskriver hvem kunden er og konsulentens rolle. Behold kun de vigtigste punkter og resultater. Brug bullet points hvor det giver mening. Max 8-12 bullets i alt. Grupper i 2-3 logiske kategorier hvis det giver mening. (3) Tech stack: udtr\u00e6k ALLE teknologier som kommasepareret streng. Retur KUN valid JSON uden markdown startende med { og sluttende med }. I alle tekstfelter må du IKKE bruge markdown formatering som **fed** eller *kursiv* - brug kun almindelig tekst. For kategorioverskrifter i jobbeskrivelser, skriv blot overskriften efterfulgt af kolon, ingen stjerner.'
+        : 'Du er en CV-dataekstractor. Udtr\u00e6k al information og bevar teksten pr\u00e6cis som den er - omskriv, forkort eller \u00e6ndr IKKE noget. Brug den originale tekst direkte. Udtr\u00e6k tech stack som kommasepareret streng. Retur KUN valid JSON uden markdown startende med { og sluttende med }. I alle tekstfelter må du IKKE bruge markdown formatering som **fed** eller *kursiv* - brug kun almindelig tekst. For kategorioverskrifter i jobbeskrivelser, skriv blot overskriften efterfulgt af kolon, ingen stjerner.')
+      : (rewrite
+        ? 'You are a CV data extractor and experienced technical writer for an IT recruitment company. IMPORTANT: Never exaggerate a candidate\'s qualifications. Preserve the exact strength of statements. Credibility is paramount. IMPORTANT: Never exaggerate or upgrade a candidate\'s qualifications beyond what is stated in the original - \'knowledge of\' must not become \'extensive knowledge of\', \'experience with\' must not become \'expert in\'. Credibility is paramount. Extract structured information and rewrite following these rules: (1) Profile/summary: max 8 sentences total, broken into 2-3 short paragraphs separated by blank lines. Use the entire CV as source - profile text, experience, skills and education - to create a nuanced profile reflecting the candidates overall background. Focus on primary strengths, unique value and work style. If the CV mentions personal interests or hobbies outside work, include a brief mention at the end of the profile - maximum one sentence - as it gives a more personal impression of the candidate. (2) Each job description: start with 2-3 lines describing the client and role, then bullet points with key responsibilities and achievements, max 8-12 bullets grouped in 2-3 categories. (3) Tech stack: extract ALL technologies as comma-separated string. Return ONLY valid JSON with no markdown starting with { and ending with }. In all text fields, do NOT use markdown formatting such as **bold** or *italic* - use plain text only. For category headings in job descriptions, just write the heading followed by a colon, no asterisks.'
+        : 'You are a CV data extractor. Extract all information and preserve the text exactly as it is - do NOT rewrite, shorten or change anything. Use original text directly. Extract tech stack as comma-separated string. Return ONLY valid JSON with no markdown starting with { and ending with }. In all text fields, do NOT use markdown formatting such as **bold** or *italic* - use plain text only. For category headings in job descriptions, just write the heading followed by a colon, no asterisks.');
+
     const response = await fetch('/api/extract-cv', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: `You are a CV data extractor. Extract structured information from CVs and return ONLY valid JSON with no markdown, no backticks, no explanation. The output language is "${lang}". ${lang === 'da' ? 'Write all text in the "profile" field and all job description fields in Danish, regardless of the language of the uploaded CV.' : 'Write all text in the "profile" field and all job description fields in English, regardless of the language of the uploaded CV.'}`,
+        max_tokens: 8000,
+        system: systemPrompt,
         messages
       })
     });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `API error ${response.status}`);
+    }
 
     const data = await response.json();
     const text = data.content?.map(c => c.text || '').join('');
@@ -825,7 +1071,7 @@ async function handleFile(file) {
     showAiStatus('done', t('aiDone'));
   } catch (err) {
     console.error(err);
-    showAiStatus('error', t('aiError'));
+    showAiStatus('error', (lang === 'da' ? '❌ Fejl: ' : '❌ Error: ') + err.message);
   }
 }
 
@@ -839,16 +1085,22 @@ const EXTRACTION_PROMPT = `Extract all information from this CV and return ONLY 
   "location": "",
   "linkedin": "",
   "profile": "",
-  "experience": [{ "role": "", "company": "", "period": "", "description": "" }],
+  "experience": [{ "role": "", "company": "", "period": "", "description": "", "techStack": "" }],
   "furtherExperience": [{ "title": "", "company": "", "period": "" }],
   "skills": [""],
   "education": [{ "degree": "", "school": "", "period": "", "description": "" }],
-  "languages": [{ "language": "", "level": "" }]
+  "languages": [{ "language": "", "level": "" }],
+  "certifications": [{ "name": "", "issuer": "", "year": "" }]
 }
 Extract as much as possible. Return ONLY the JSON, nothing else.`;
 
 const EXTRACTION_PROMPT_EMPTY = `Return this empty JSON:
 {"firstName":"","lastName":"","jobTitle":"","email":"","phone":"","location":"","linkedin":"","profile":"","experience":[],"furtherExperience":[],"skills":[],"education":[],"languages":[]}`;
+
+function stripMarkdown(text) {
+  if (!text) return text;
+  return text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+}
 
 function populateFromAI(d) {
   if (d.firstName) document.getElementById('firstName').value = d.firstName;
@@ -858,15 +1110,21 @@ function populateFromAI(d) {
   if (d.phone) document.getElementById('phone').value = d.phone;
   if (d.location) document.getElementById('location').value = d.location;
   if (d.linkedin) document.getElementById('linkedin').value = d.linkedin;
-  if (d.profile) document.getElementById('profileText').value = d.profile;
+  if (d.profile) document.getElementById('profileText').value = stripMarkdown(d.profile);
 
-  expItems = (d.experience || []);
-  furtherItems = (d.furtherExperience || []);
-  skills = (d.skills || []);
+  const expItems_parsed = (d.experience || []).map(e => ({ ...e, description: stripMarkdown(e.description) }));
+  // Merge furtherExperience into expItems with a flag
+  const further = (d.furtherExperience || []).map(f => ({
+    role: f.title||'', company: f.company||'', period: f.period||'', description: '', isFurther: true
+  }));
+  expItems = [...expItems_parsed, ...further];
+  skills = (d.skills || []).map(s => typeof s === 'string' ? { name: s, top: false } : s);
   eduItems = (d.education || []);
   langItems = (d.languages || []);
+  certItems = (d.certifications || []).map(c => typeof c === 'string' ? { name: c, issuer: '', year: '' } : c);
 
   renderSkillTags();
+  renderTopSkillsPicker();
   rebuildAllLists();
   updatePreview();
 }
@@ -888,28 +1146,103 @@ function showAiStatus(type, msg) {
 }
 
 // ── PDF DOWNLOAD ─────────────────────────────────────────────────────────────
-function downloadPDF() {
+async function downloadPDF() {
   const btn = document.getElementById('pdfBtn');
   btn.disabled = true;
-  btn.innerHTML = '⏳ Generating…';
+  btn.innerHTML = '⏳ Genererer…';
 
-  const fn = document.getElementById('firstName').value || 'CV';
-  const ln = document.getElementById('lastName').value || '';
-  const filename = `${fn}_${ln}_CV.pdf`.replace(/\s+/g, '_');
+  try {
+    const fn = document.getElementById('firstName').value || 'CV';
+    const ln = document.getElementById('lastName').value || '';
+    const filename = (fn + '_' + ln + '_CV.pdf').replace(/\s+/g, '_');
+    const branded = document.getElementById('brandToggle').checked;
 
-  const element = document.getElementById('cvDoc');
-  const opt = {
-    margin: 0,
-    filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+    // Send only the CV data, not the full HTML
+    const cvData = {
+      firstName: document.getElementById('firstName').value,
+      lastName: document.getElementById('lastName').value,
+      jobTitle: document.getElementById('jobTitle').value,
+      consultant: document.getElementById('consultant').value,
+      language: lang,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      location: document.getElementById('location').value,
+      linkedin: document.getElementById('linkedin').value,
+      profile: document.getElementById('profileText').value,
+      photoUrl: window._photoDataUrl || '',
+      experience: expItems,
+      skills: skills,
+      education: eduItems,
+      languages: langItems,
+      certifications: certItems,
+      yearFilter: parseInt(document.getElementById('yearFilter').value) || 50
+    };
 
-  html2pdf().set(opt).from(element).save().then(() => {
-    btn.disabled = false;
-    btn.innerHTML = `⬇ <span data-t="downloadPDF">${t('downloadPDF')}</span>`;
-  });
+    const response = await fetch('https://onebgroup-cv-api.vercel.app/api/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cvData, branded, filename })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'API fejl ' + response.status);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    
+    // Verify it starts with %PDF
+    const header = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+    if (header !== '%PDF') {
+      const text = new TextDecoder().decode(bytes.slice(0, 200));
+      throw new Error('Ikke en gyldig PDF. Server svarede: ' + text);
+    }
+    
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  } catch(err) {
+    console.error(err);
+    alert('PDF fejl: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⬇ <span>' + t('downloadPDF') + '</span>';
+}
+
+
+// ── PAGE BREAK INDICATORS ────────────────────────────────────────────────────
+function updatePageBreaks() {
+  const doc = document.getElementById('cvDoc');
+  const branded = document.getElementById('brandToggle').checked;
+
+  // Remove old page break lines
+  doc.querySelectorAll('.page-break-line').forEach(e => e.remove());
+  doc.querySelectorAll('.cv-preview-footer').forEach(e => e.remove());
+  doc.querySelectorAll('.cv-preview-header').forEach(e => e.remove());
+
+  // A4 at screen resolution (794px wide = 96dpi A4)
+  // Scale factor: our cv-doc is max 760px, A4 is 210mm = 794px at 96dpi
+  const scale = doc.offsetWidth / 794;
+  const pageHeightPx = Math.round(1123 * scale);
+  const totalH = doc.scrollHeight;
+  const numPages = Math.max(1, Math.ceil(totalH / pageHeightPx));
+
+  if (branded) {
+    // Add footer to bottom of doc
+    const footer = document.createElement('div');
+    footer.className = 'cv-preview-footer';
+    footer.innerHTML = '<span>onebgroup.dk</span><span>1/' + numPages + '</span>';
+    doc.appendChild(footer);
+  }
 }
 
 // ── PASSWORD GATE ─────────────────────────────────────────────────────────────
