@@ -912,6 +912,45 @@ function downloadPDF() {
   });
 }
 
+// ── PASSWORD GATE ─────────────────────────────────────────────────────────────
+(function() {
+  const CORRECT = 'OneBgroup2024';
+  const SESSION_KEY = 'ob_auth';
+
+  if (sessionStorage.getItem(SESSION_KEY) === '1') return;
+
+  document.body.style.display = 'none';
+
+  const overlay = document.createElement('div');
+  overlay.innerHTML = `
+    <div style="position:fixed;inset:0;background:#f4f2ee;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'DM Sans',sans-serif;">
+      <div style="background:white;padding:40px 48px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);text-align:center;min-width:320px;">
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:#1a2e4a;margin-bottom:6px;">One B Group</div>
+        <div style="font-size:0.8rem;letter-spacing:2px;color:#6e6e6e;margin-bottom:28px;">CV GENERATOR</div>
+        <input id="ob-pw" type="password" placeholder="Password" style="width:100%;padding:10px 14px;border:1px solid #e2ddd7;border-radius:6px;font-size:0.95rem;outline:none;margin-bottom:8px;">
+        <div id="ob-err" style="color:#c0392b;font-size:0.8rem;min-height:18px;margin-bottom:8px;"></div>
+        <button id="ob-btn" style="width:100%;padding:10px;background:#1a2e4a;color:white;border:none;border-radius:6px;font-size:0.95rem;cursor:pointer;">Log ind</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.body.style.display = '';
+
+  function attempt() {
+    if (document.getElementById('ob-pw').value === CORRECT) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      overlay.remove();
+    } else {
+      document.getElementById('ob-err').textContent = 'Forkert password';
+      document.getElementById('ob-pw').value = '';
+      document.getElementById('ob-pw').focus();
+    }
+  }
+
+  document.getElementById('ob-btn').addEventListener('click', attempt);
+  document.getElementById('ob-pw').addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
+  document.getElementById('ob-pw').focus();
+})();
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 applyTranslations();
 updatePreview();
